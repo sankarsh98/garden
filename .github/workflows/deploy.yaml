@@ -1,0 +1,60 @@
+name: Deploy site
+
+on:
+  push:
+    branches: [main]
+  repository_dispatch:
+    types: [notes-updated]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      # Notes live in a private repo; NOTES_TOKEN is a fine-grained PAT with read access to it.
+      - uses: actions/checkout@v6
+        with:
+          repository: sankarsh98/Obsidian
+          token: ${{ secrets.NOTES_TOKEN }}
+          path: notes-src
+          fetch-depth: 0
+
+      - name: Copy notes into content/
+        run: |
+          find content -mindepth 1 ! -name index.md -delete
+          rsync -a --exclude '.obsidian' --exclude '.DS_Store' --exclude 'index.md' notes-src/Thoughts/ content/
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+
+      - run: npm ci
+      - run: npx quartz plugin install
+      - run: npx quartz build
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: public
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

@@ -20,12 +20,12 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
       # Notes live in a private repo; NOTES_TOKEN is a fine-grained PAT with read access to it.
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           repository: sankarsh98/Obsidian
           token: ${{ secrets.NOTES_TOKEN }}
@@ -37,7 +37,7 @@ jobs:
           find content -mindepth 1 ! -name index.md -delete
           rsync -a --exclude '.obsidian' --exclude '.DS_Store' --exclude 'index.md' notes-src/Thoughts/ content/
 
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: 24
 
@@ -45,7 +45,7 @@ jobs:
       - run: npx quartz plugin install
       - run: npx quartz build
 
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/upload-pages-artifact@v5
         with:
           path: public
 
@@ -57,4 +57,4 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
